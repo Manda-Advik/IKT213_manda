@@ -10,5 +10,5 @@ def print_image_information(image):
     print(f"Data type: {image.dtype}")
 
 if __name__ == "__main__":
-    img = cv2.imread("lena-1.png")
+    img = cv2.imread("lena.png")
     print_image_information(img)
