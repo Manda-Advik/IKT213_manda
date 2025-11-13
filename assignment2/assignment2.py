@@ -1,106 +1,118 @@
 import cv2
 import numpy as np
-import os
+img = cv2.imread("C:/Users/adity/Downloads/lena-2.png")
+h, w, c = img.shape
+
+#Task 1 Padding
+def padding(image, w):
+    # the task of adding border
+    padded_image = cv2.copyMakeBorder(image,w,w,w,w,cv2.BORDER_REFLECT)
+    #Saving it
+    cv2.imwrite("padded_image.jpg", padded_image)
+    return padded_image
 
 
-def read_img(path):
-    return cv2.imread(path)
+output1 = padding(img, 100)
+
+#Task 2 Cropping
+
+def crop(image, l,r,t,b):
+    # cropping
+    cropped_image = image[t:b, l:r]
+    # Saving
+    cv2.imwrite("cropped_image.jpg", cropped_image)
+    return cropped_image
+
+l = 80
+t = 80
+r = w - 130
+b = h - 130
+output2 = crop(img,l,r,t,b)
 
 
-def write_img(result, source_path, tag):
-    folder = os.path.dirname(source_path)
-    file = os.path.basename(source_path)
-    name, ext = os.path.splitext(file)
-    if not ext:
-        ext = ".png"
-    new_file = os.path.join(folder, f"{name}_{tag}{ext}")
-    cv2.imwrite(new_file, result)
+def resize(image, w, h):
+    resized_image = cv2.resize(image, (w, h))
+    cv2.imwrite("resized_image.jpg", resized_image)
+    return resized_image
 
 
-def to_gray(path):
-    img = read_img(path)
-    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    write_img(gray_img, path, "gray")
+output3 = resize(img, 200, 200)
 
+def copy(image, emptypicturearray):
 
-def rotate_img(path, angle):
-    img = read_img(path)
+    for i in range(h):
+        for j in range(w):
+            for k in range(c):
+                emptypicturearray[i, j, k] = image[i, j, k]
+
+    # Save the copied image
+    cv2.imwrite("copied_image.jpg", emptypicturearray)
+    return emptypicturearray
+
+# Create empty array
+emptypicturearray = np.zeros((h, w, 3), dtype=np.uint8)
+
+# Copy pixels
+output4 = copy(img, emptypicturearray)
+
+#Task 5 Grayscaling
+def grayscale(image):
+    # Convert to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Save the grayscale image
+    cv2.imwrite("grayscale_image.jpg", gray)
+    return gray
+
+output5 = grayscale(img)
+
+def hsv(image):
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    cv2.imwrite("hsv_image.jpg", hsv)
+    return hsv
+
+output6 = hsv(img)
+
+def hue_shifted(image, emptyPictureArray, hue):
+
+    for i in range(h):
+        for j in range(w):
+            for k in range(c):
+                new_val = image[i, j, k] + hue
+                emptyPictureArray[i, j, k] = np.clip(new_val, 0, 255)
+
+    cv2.imwrite("hue_shifted.jpg", emptyPictureArray)
+    return emptyPictureArray
+
+emptyPictureArray = np.zeros((h, w, 3), dtype=np.uint8)
+output7 = hue_shifted(img, emptyPictureArray, 50)
+
+def smoothing(image):
+
+    smooth_image = cv2.GaussianBlur(image, (15, 15), 0, borderType=cv2.BORDER_DEFAULT)
+    cv2.imwrite("smoothed_image.jpg", smooth_image)
+    return smooth_image
+
+output8 = smoothing(img)
+
+def rotation(image, angle):
     if angle == 90:
-        rot = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+
+        rotated_image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        cv2.imwrite("rotated_image_90.jpg", rotated_image)
     elif angle == 180:
-        rot = cv2.rotate(img, cv2.ROTATE_180)
-    write_img(rot, path, f"rot{angle}")
+
+        rotated_image = cv2.rotate(image, cv2.ROTATE_180)
+        cv2.imwrite("rotated_image_180.jpg", rotated_image)
+    else:
+
+        rotated_image = image
 
 
-def scale_img(path, new_w, new_h):
-    img = read_img(path)
-    scaled = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
-    write_img(scaled, path, "resize")
+    return rotated_image
 
 
-def cut_region(path, left, right, top, bottom):
-    img = read_img(path)
-    h, w = img.shape[:2]
-    section = img[top:h - bottom, left:w - right]
-    write_img(section, path, "crop")
+output9a = rotation(img, 90)
+output9b = rotation(img, 180)
 
 
-def blur_img(path):
-    img = read_img(path)
-    blur = cv2.GaussianBlur(img, (15, 15), 0)
-    write_img(blur, path, "smooth")
 
-
-def duplicate(path, blank):
-    img = read_img(path)
-    h, w, _ = img.shape
-    for r in range(h):
-        for c in range(w):
-            blank[r, c] = img[r, c]
-    write_img(blank, path, "copy")
-
-
-def shift_hue(path, container, shift_val):
-    img = read_img(path)
-    rows, cols, ch = img.shape
-    for r in range(rows):
-        for c in range(cols):
-            for k in range(ch):
-                container[r, c, k] = (int(img[r, c, k]) + shift_val) % 256
-    write_img(container, path, "hueShift")
-
-
-def add_padding(path, border=50):
-    img = read_img(path)
-    padded_img = cv2.copyMakeBorder(img, border, border, border, border,
-                                    borderType=cv2.BORDER_REFLECT_101)
-    write_img(padded_img, path, "pad")
-
-
-def to_hsv(path):
-    img = read_img(path)
-    hsv_version = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    write_img(hsv_version, path, "hsv")
-
-
-if __name__ == "__main__":
-    src = r"D:\PROJECTS\ADVIK\assignment2\lena-2.png"
-
-    add_padding(src, 100)
-    cut_region(src, 80, 130, 80, 130)
-    scale_img(src, 200, 200)
-
-    base_img = read_img(src)
-    h, w, c = base_img.shape
-    blank_img = np.zeros((h, w, c), dtype=np.uint8)
-    duplicate(src, blank_img)
-
-    to_gray(src)
-    to_hsv(src)
-
-    shifted = np.zeros((h, w, c), dtype=np.uint8)
-    shift_hue(src, shifted, 50)
-
-    blur_img(src)
-    rotate_img(src, 90)
-    rotate_img(src, 180)
